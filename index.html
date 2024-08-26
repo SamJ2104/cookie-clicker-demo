@@ -190,4 +190,58 @@
         // Listen for peers leaving
         room.onPeerLeave(peerId => {
             console.log(`${peerId} left`);
-           
+            const cursor = peerCursors[peerId];
+            if (cursor) {
+                document.body.removeChild(cursor);
+                delete peerCursors[peerId];
+            }
+        });
+
+        // Handle receiving chat messages
+        getChat((message, peerId) => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${peerId}: ${message}`;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+        });
+
+        // Handle sending chat messages
+        chatSendButton.addEventListener('click', () => {
+            const message = chatInput.value;
+            if (message) {
+                sendChat(message); // Send message to others
+                const selfMessageElement = document.createElement('div');
+                selfMessageElement.textContent = `You: ${message}`; // Display own message
+                chatContainer.appendChild(selfMessageElement);
+                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+                chatInput.value = ''; // Clear input
+            }
+        });
+
+        // Handle username updates
+        usernameUpdateButton.addEventListener('click', () => {
+            const newUsername = usernameInput.value.trim();
+            if (newUsername) {
+                username = newUsername;
+                sendUsername(username); // Broadcast the updated username
+                usernameInput.value = ''; // Clear input
+            }
+        });
+
+        // Handle receiving username updates
+        getUsername((newUsername, peerId) => {
+            const cursor = peerCursors[peerId];
+            if (cursor) {
+                const usernameElement = cursor.querySelector('.username');
+                if (usernameElement) {
+                    usernameElement.textContent = newUsername;
+                }
+            }
+        });
+
+        // Ensure the local cursor displays the correct username
+        sendUsername(username);
+
+    </script>
+</body>
+</html>
