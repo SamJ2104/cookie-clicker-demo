@@ -39,11 +39,83 @@
             color: white;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
+        #chatContainer {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #ccc;
+            padding: 10px;
+            color: white;
+            font-size: 0.9em;
+        }
+        #chatInputContainer {
+            position: fixed;
+            bottom: 0;
+            left: 20px;
+            width: 300px;
+            display: flex;
+            background: rgba(0, 0, 0, 0.7);
+            border-top: 1px solid #ccc;
+        }
+        #chatInput {
+            flex: 1;
+            padding: 5px;
+            border: none;
+            border-radius: 4px;
+        }
+        #chatSendButton {
+            padding: 5px 10px;
+            border: none;
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        #usernameInputContainer {
+            position: fixed;
+            bottom: 60px;
+            left: 20px;
+            display: flex;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #ccc;
+            padding: 5px;
+        }
+        #usernameInput {
+            flex: 1;
+            padding: 5px;
+            border: none;
+            border-radius: 4px;
+        }
+        #usernameUpdateButton {
+            padding: 5px 10px;
+            border: none;
+            background: #28A745;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
     <div id="counter">0</div>
     <button id="clickButton">Click Me!</button>
+    
+    <div id="chatContainer"></div>
+    <div id="chatInputContainer">
+        <input id="chatInput" type="text" placeholder="Type a message...">
+        <button id="chatSendButton">Send</button>
+    </div>
+    
+    <div id="usernameInputContainer">
+        <input id="usernameInput" type="text" placeholder="Enter new username...">
+        <button id="usernameUpdateButton">Update</button>
+    </div>
+
     <script type="module">
         import { joinRoom, selfId } from '/trystero-torrent.min.js';
 
@@ -52,13 +124,22 @@
 
         const counterElement = document.getElementById('counter');
         const clickButton = document.getElementById('clickButton');
+        const chatContainer = document.getElementById('chatContainer');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendButton = document.getElementById('chatSendButton');
+        const usernameInput = document.getElementById('usernameInput');
+        const usernameUpdateButton = document.getElementById('usernameUpdateButton');
+        
         let counter = 0;
+        let username = 'User' + selfId.slice(0, 4); // Default username
 
         const peerCursors = {};
 
         // Shorten action names
         const [sendCounter, getCounter] = room.makeAction('cnt');
         const [sendCursor, getCursor] = room.makeAction('cur');
+        const [sendChat, getChat] = room.makeAction('chat');
+        const [sendUsername, getUsername] = room.makeAction('uname');
 
         // Function to update the counter, ensuring it only increases
         function updateCounter(newCounter) {
@@ -80,12 +161,12 @@
         });
 
         // Handle peer cursor movement
-        getCursor(({ x, y, peerId, username }) => {
+        getCursor(({ x, y, peerId, username: peerUsername }) => {
             let cursor = peerCursors[peerId];
             if (!cursor) {
                 cursor = document.createElement('div');
                 cursor.className = 'cursor';
-                cursor.innerHTML = `<div class="username">${username}</div>`;
+                cursor.innerHTML = `<div class="username">${peerUsername}</div>`;
                 document.body.appendChild(cursor);
                 peerCursors[peerId] = cursor;
             }
@@ -97,7 +178,7 @@
         document.addEventListener('mousemove', (e) => {
             const x = e.clientX;
             const y = e.clientY;
-            sendCursor({ x, y, peerId: selfId, username: 'User' + selfId.slice(0, 4) });
+            sendCursor({ x, y, peerId: selfId, username });
         });
 
         // Listen for peers joining
@@ -112,6 +193,45 @@
                 delete peerCursors[peerId];
             }
         });
+
+        // Handle receiving chat messages
+        getChat((message, peerId) => {
+            const messageElement = document.createElement('div');
+            messageElement.textContent = `${peerId}: ${message}`;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+        });
+
+        // Handle sending chat messages
+        chatSendButton.addEventListener('click', () => {
+            const message = chatInput.value;
+            if (message) {
+                sendChat(message);
+                chatInput.value = ''; // Clear input
+            }
+        });
+
+        // Handle username updates
+        usernameUpdateButton.addEventListener('click', () => {
+            const newUsername = usernameInput.value.trim();
+            if (newUsername) {
+                username = newUsername;
+                sendUsername(username);
+                usernameInput.value = ''; // Clear input
+            }
+        });
+
+        // Handle receiving username updates
+        getUsername((newUsername, peerId) => {
+            const cursor = peerCursors[peerId];
+            if (cursor) {
+                const usernameElement = cursor.querySelector('.username');
+                if (usernameElement) {
+                    usernameElement.textContent = newUsername;
+                }
+            }
+        });
+
     </script>
 </body>
 </html>
