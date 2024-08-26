@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Clicker Game</title>
+    <title>Community Clicker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: "Merriweather", Arial, sans-serif;
             text-align: center;
             margin: 0;
             height: 100vh;
@@ -17,6 +18,7 @@
             overflow: hidden;
         }
         #counter {
+            font-family: "Merriweather", Arial, sans-serif;
             font-size: 2em;
             margin-bottom: 20px;
         }
@@ -24,6 +26,18 @@
             padding: 10px 20px;
             font-size: 1.5em;
             cursor: pointer;
+            background: none;
+            border: none;
+            position: relative;
+            display: inline-block;
+        }
+        #clickButton img {
+            transition: transform 0.1s ease;
+            width: 200px; /* Adjust size as needed */
+            height: auto; /* Maintain aspect ratio */
+        }
+        #clickButton.clicked img {
+            transform: scale(1.2); /* Scale up by 20% */
         }
         .cursor {
             position: absolute;
@@ -34,12 +48,15 @@
             height: 23px; /* Adjust based on your image size */
         }
         .username {
+            font-family: "Merriweather", Arial, sans-serif;
             font-size: 0.8em;
             margin-top: -20px;
             color: black;
             text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
         }
         #chatContainer {
+            text-align: left;
+            font-family: "Merriweather", Arial, sans-serif;
             position: fixed;
             bottom: 60px;
             left: 20px;
@@ -105,8 +122,8 @@
     </style>
 </head>
 <body>
-    <div id="counter">0</div>
-    <button id="clickButton">Click Me!</button>
+    <div id="counter">0 Cookies</div>
+    <button id="clickButton"><img src="https://static.wikia.nocookie.net/cookieclicker/images/5/5a/PerfectCookie.png" alt="Click Me!"></button>
     
     <div id="chatContainer"></div>
     <div id="chatInputContainer">
@@ -121,10 +138,10 @@
 
     <script type="module">
         import { joinRoom, selfId } from '/trystero-torrent.min.js';
-
+    
         const appId = 'multiplayer_clicker_game';
         const room = joinRoom({ appId }, 'clicker_room');
-
+    
         const counterElement = document.getElementById('counter');
         const clickButton = document.getElementById('clickButton');
         const chatContainer = document.getElementById('chatContainer');
@@ -134,35 +151,40 @@
         const usernameUpdateButton = document.getElementById('usernameUpdateButton');
         
         let counter = 0;
-        let username = 'User' + selfId.slice(0, 4); // Default username
-
+        let username = 'user.' + selfId.slice(0, 4); // Default username
+    
         const peerCursors = {};
-
+        let lastClickTime = 0;
+    
         // Shorten action names
         const [sendCounter, getCounter] = room.makeAction('cnt');
         const [sendCursor, getCursor] = room.makeAction('cur');
         const [sendChat, getChat] = room.makeAction('chat');
         const [sendUsername, getUsername] = room.makeAction('uname');
-
+    
         // Function to update the counter, ensuring it only increases
         function updateCounter(newCounter) {
             if (newCounter > counter) {
                 counter = newCounter;
-                counterElement.textContent = counter;
+                counterElement.textContent = counter + " Cookies";
+                
+                // Apply the click effect when counter increases
+                clickButton.classList.add('clicked');
+                setTimeout(() => clickButton.classList.remove('clicked'), 100); // Remove effect after 100ms
             }
         }
-
+    
         // Handle button click
         clickButton.addEventListener('click', () => {
             updateCounter(counter + 1); // Increment locally
-            sendCounter(counter + 1);   // Broadcast the updated counter
+            sendCounter(counter);   // Broadcast the updated counter
         });
-
+    
         // Handle receiving updated counter from peers
         getCounter((newCounter, peerId) => {
             updateCounter(newCounter); // Update only if the new value is higher
         });
-
+    
         // Handle peer cursor movement
         getCursor(({ x, y, peerId, username: peerUsername }) => {
             let cursor = peerCursors[peerId];
@@ -176,17 +198,17 @@
             cursor.style.left = `${x}px`;
             cursor.style.top = `${y}px`;
         });
-
+    
         // Send cursor position to peers
         document.addEventListener('mousemove', (e) => {
             const x = e.clientX;
             const y = e.clientY;
             sendCursor({ x, y, peerId: selfId, username });
         });
-
+    
         // Listen for peers joining
         room.onPeerJoin(peerId => console.log(`${peerId} joined`));
-
+    
         // Listen for peers leaving
         room.onPeerLeave(peerId => {
             console.log(`${peerId} left`);
@@ -196,7 +218,7 @@
                 delete peerCursors[peerId];
             }
         });
-
+    
         // Handle receiving chat messages
         getChat((message, peerId) => {
             // Retrieve the sender's username
@@ -206,7 +228,7 @@
             chatContainer.appendChild(messageElement);
             chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
         });
-
+    
         // Handle sending chat messages
         chatSendButton.addEventListener('click', () => {
             const message = chatInput.value;
@@ -215,21 +237,20 @@
                 const selfMessageElement = document.createElement('div');
                 selfMessageElement.textContent = `You: ${message}`; // Display own message
                 chatContainer.appendChild(selfMessageElement);
-                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
+                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto
                 chatInput.value = ''; // Clear input
             }
         });
-
+    
         // Handle username updates
         usernameUpdateButton.addEventListener('click', () => {
             const newUsername = usernameInput.value.trim();
             if (newUsername) {
                 username = newUsername;
                 sendUsername(username); // Broadcast the updated username
-                usernameInput.value = ''; // Clear input
             }
         });
-
+    
         // Handle receiving username updates
         getUsername((newUsername, peerId) => {
             const cursor = peerCursors[peerId];
@@ -240,10 +261,11 @@
                 }
             }
         });
-
+    
         // Ensure the local cursor displays the correct username
         sendUsername(username);
-
+    
     </script>
+    
 </body>
 </html>
