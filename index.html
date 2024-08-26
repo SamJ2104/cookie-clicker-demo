@@ -60,20 +60,23 @@
         const [sendCounter, getCounter] = room.makeAction('cnt');
         const [sendCursor, getCursor] = room.makeAction('cur');
 
-        function updateCounter(value) {
-            counter = value;
-            counterElement.textContent = counter;
+        // Function to update the counter, ensuring it only increases
+        function updateCounter(newCounter) {
+            if (newCounter > counter) {
+                counter = newCounter;
+                counterElement.textContent = counter;
+            }
         }
 
         // Handle button click
         clickButton.addEventListener('click', () => {
-            updateCounter(counter + 1);
-            sendCounter(counter);
+            updateCounter(counter + 1); // Increment locally
+            sendCounter(counter + 1);   // Broadcast the updated counter
         });
 
         // Handle receiving updated counter from peers
         getCounter((newCounter, peerId) => {
-            updateCounter(newCounter);
+            updateCounter(newCounter); // Update only if the new value is higher
         });
 
         // Handle peer cursor movement
