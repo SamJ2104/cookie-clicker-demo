@@ -199,8 +199,10 @@
 
         // Handle receiving chat messages
         getChat((message, peerId) => {
+            // Retrieve the sender's username
+            const peerUsername = peerCursors[peerId] ? peerCursors[peerId].querySelector('.username').textContent : peerId;
             const messageElement = document.createElement('div');
-            messageElement.textContent = `${peerId}: ${message}`;
+            messageElement.textContent = `${peerUsername}: ${message}`;
             chatContainer.appendChild(messageElement);
             chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
         });
