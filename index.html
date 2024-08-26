@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial, shrink-to-fit=no">
     <title>Multiplayer Clicker Game</title>
     <style>
         body {
@@ -36,8 +36,8 @@
         .username {
             font-size: 0.8em;
             margin-top: -20px;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            color: black;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
         }
         #chatContainer {
             position: fixed;
@@ -46,10 +46,10 @@
             width: 300px;
             max-height: 200px;
             overflow-y: auto;
-            background: rgba(0, 0, 0, 0.7);
+            background: white;
             border: 1px solid #ccc;
             padding: 10px;
-            color: white;
+            color: black;
             font-size: 0.9em;
         }
         #chatInputContainer {
@@ -58,18 +58,19 @@
             left: 20px;
             width: 300px;
             display: flex;
-            background: rgba(0, 0, 0, 0.7);
+            background: white;
             border-top: 1px solid #ccc;
         }
         #chatInput {
             flex: 1;
             padding: 5px;
-            border: none;
+            border: 1px solid #ccc;
             border-radius: 4px;
+            color: black;
         }
         #chatSendButton {
             padding: 5px 10px;
-            border: none;
+            border: 1px solid #ccc;
             background: #007BFF;
             color: white;
             cursor: pointer;
@@ -77,22 +78,23 @@
         }
         #usernameInputContainer {
             position: fixed;
-            bottom: 60px;
+            top: 20px;
             left: 20px;
             display: flex;
-            background: rgba(0, 0, 0, 0.7);
+            background: white;
             border: 1px solid #ccc;
             padding: 5px;
         }
         #usernameInput {
             flex: 1;
             padding: 5px;
-            border: none;
+            border: 1px solid #ccc;
             border-radius: 4px;
+            color: black;
         }
         #usernameUpdateButton {
             padding: 5px 10px;
-            border: none;
+            border: 1px solid #ccc;
             background: #28A745;
             color: white;
             cursor: pointer;
