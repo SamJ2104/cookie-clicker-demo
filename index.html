@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Clicker Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        #counter {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        #clickButton {
+            padding: 10px 20px;
+            font-size: 1.5em;
+            cursor: pointer;
+        }
+        .cursor {
+            position: absolute;
+            pointer-events: none;
+        }
+        .username {
+            font-size: 0.8em;
+            margin-top: -15px;
+        }
+    </style>
+</head>
+<body>
+    <div id="counter">0</div>
+    <button id="clickButton">Click Me!</button>
+    <script type="module">
+        import { joinRoom, selfId } from '/trystero-torrent.min.js';
+
+        const appId = 'multiplayer_clicker_game';
+        const room = joinRoom({ appId }, 'clicker_room');
+
+        const counterElement = document.getElementById('counter');
+        const clickButton = document.getElementById('clickButton');
+        let counter = 0;
+
+        const peerCursors = {};
+
+        // Shorten action names
+        const [sendCounter, getCounter] = room.makeAction('cnt');
+        const [sendCursor, getCursor] = room.makeAction('cur');
+
+        function updateCounter(value) {
+            counter = value;
+            counterElement.textContent = counter;
+        }
+
+        // Handle button click
+        clickButton.addEventListener('click', () => {
+            updateCounter(counter + 1);
+            sendCounter(counter);
+        });
+
+        // Handle receiving updated counter from peers
+        getCounter((newCounter, peerId) => {
+            updateCounter(newCounter);
+        });
+
+        // Handle peer cursor movement
+        getCursor(({ x, y, peerId, username }) => {
+            let cursor = peerCursors[peerId];
+            if (!cursor) {
+                cursor = document.createElement('div');
+                cursor.className = 'cursor';
+                cursor.innerHTML = `<div class="username">${username}</div>`;
+                document.body.appendChild(cursor);
+                peerCursors[peerId] = cursor;
+            }
+            cursor.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // Send cursor position to peers
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            sendCursor({ x, y, peerId: selfId, username: 'User' + selfId.slice(0, 4) });
+        });
+
+        // Listen for peers joining
+        room.onPeerJoin(peerId => console.log(`${peerId} joined`));
+
+        // Listen for peers leaving
+        room.onPeerLeave(peerId => {
+            console.log(`${peerId} left`);
+            const cursor = peerCursors[peerId];
+            if (cursor) {
+                document.body.removeChild(cursor);
+                delete peerCursors[peerId];
+            }
+        });
+    </script>
+</body>
+</html>
