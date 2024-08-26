@@ -119,6 +119,33 @@
             border-radius: 4px;
             margin-left: 5px;
         }
+        #leaderboard {
+            position: fixed;
+            bottom: 0;
+            right: 20px;
+            width: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-size: 0.9em;
+            color: black;
+            text-align: left;
+        }
+        #leaderboard h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        #leaderboard ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        #leaderboard li {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -136,6 +163,11 @@
         <button id="usernameUpdateButton">Update</button>
     </div>
 
+    <div id="leaderboard">
+        <h3>Leaderboard</h3>
+        <ul id="leaderboardList"></ul>
+    </div>
+
     <script type="module">
         import { joinRoom, selfId } from '/trystero-torrent.min.js';
     
@@ -149,18 +181,21 @@
         const chatSendButton = document.getElementById('chatSendButton');
         const usernameInput = document.getElementById('usernameInput');
         const usernameUpdateButton = document.getElementById('usernameUpdateButton');
+        const leaderboardList = document.getElementById('leaderboardList');
         
         let counter = 0;
         let username = 'user.' + selfId.slice(0, 4); // Default username
     
         const peerCursors = {};
         let lastClickTime = 0;
+        let clickCounts = {}; // Object to store click counts per user
     
         // Shorten action names
         const [sendCounter, getCounter] = room.makeAction('cnt');
         const [sendCursor, getCursor] = room.makeAction('cur');
         const [sendChat, getChat] = room.makeAction('chat');
         const [sendUsername, getUsername] = room.makeAction('uname');
+        const [sendClickCount, getClickCount] = room.makeAction('clkcnt');
     
         // Function to update the counter, ensuring it only increases
         function updateCounter(newCounter) {
@@ -178,6 +213,11 @@
         clickButton.addEventListener('click', () => {
             updateCounter(counter + 1); // Increment locally
             sendCounter(counter);   // Broadcast the updated counter
+    
+            // Increment local user's click count and send it
+            clickCounts[username] = (clickCounts[username] || 0) + 1;
+            sendClickCount({ username, count: clickCounts[username] });
+            updateLeaderboard();
         });
     
         // Handle receiving updated counter from peers
@@ -185,9 +225,17 @@
             updateCounter(newCounter); // Update only if the new value is higher
         });
     
+        // Handle receiving click counts from peers
+        getClickCount(({ username, count }) => {
+            clickCounts[username] = count;
+            updateLeaderboard();
+        });
+    
         // Handle peer cursor movement
         getCursor(({ x, y, peerId, username: peerUsername }) => {
-            let cursor = peerCursors[peerId];
+           
+
+ let cursor = peerCursors[peerId];
             if (!cursor) {
                 cursor = document.createElement('div');
                 cursor.className = 'cursor';
@@ -237,7 +285,7 @@
                 const selfMessageElement = document.createElement('div');
                 selfMessageElement.textContent = `You: ${message}`; // Display own message
                 chatContainer.appendChild(selfMessageElement);
-                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto
+                chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to bottom
                 chatInput.value = ''; // Clear input
             }
         });
@@ -265,6 +313,16 @@
         // Ensure the local cursor displays the correct username
         sendUsername(username);
     
+        // Function to update the leaderboard
+        function updateLeaderboard() {
+            const sortedUsers = Object.keys(clickCounts).sort((a, b) => clickCounts[b] - clickCounts[a]);
+            leaderboardList.innerHTML = '';
+            sortedUsers.forEach(user => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${user}: ${clickCounts[user]} Cookies`;
+                leaderboardList.appendChild(listItem);
+            });
+        }
     </script>
     
 </body>
